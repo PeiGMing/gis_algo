@@ -2,6 +2,7 @@ import { EventEmitter, Injectable } from '@angular/core';
 import { v4 as uuidv4 } from 'uuid';
 import * as turf from '@turf/turf';
 import { GeoJSON2String, GeoJsonSource, String2GeoJSON } from 'src/app/lib/services/geojson-source';
+//import { Console } from 'console';
 
 @Injectable({
   providedIn: 'root'
@@ -44,7 +45,7 @@ export class DouglasPeukerService {
   /**
    *
    */
-  public get rate() {
+  public get rate() { //获取比率
     if (this.source.geojson == null) {
       return 1.0;
     }
@@ -103,7 +104,7 @@ export class DouglasPeukerService {
    *
    * @param geojson
    */
-  private getPointCount(geojson) {
+  private getPointCount(geojson) { //计算点的个数
     let count = 0;
     turf.coordEach(geojson, (currentCoord, coordIndex, featureIndex, multiFeatureIndex, geometryIndex) => {
       count++;
@@ -116,7 +117,18 @@ export class DouglasPeukerService {
    */
   public douglasTurf() {
     //TODO 请同学们完成
-
+    if (this.source.geojson == null) {
+      return;
+    }
+    const geojson = String2GeoJSON(this.source.geojson_string);
+    const options = {
+      tolerance: 180.0 * this.tolerance / (2 * Math.PI * Math.PI * 6378.137), //容差参数
+      highQuality: true
+    }
+    this.displaySource.geojson_string = GeoJSON2String(
+      turf.simplify(geojson, options),
+      true);
+    this.rateChange.emit();
   }
 
   /**
@@ -124,8 +136,141 @@ export class DouglasPeukerService {
    */
   public douglas() {
     //TODO 请同学们完成
+    if (this.source.geojson == null) {
+      return;
+    }
+    const geojson = String2GeoJSON(this.source.geojson_string);
+    const tolerance = 180.0 * this.tolerance / (2 * Math.PI * Math.PI * 6378.137); //单位转换
+    
+    turf.geomEach(geojson, function (geom) {
+      this.simplifyGeom(geom, tolerance);  
+    }.bind(this))
 
+    this.displaySource.geojson_string = GeoJSON2String(
+      geojson,
+      true);
+    this.rateChange.emit();
   }
+
+  /**
+   * 
+   * @param geometry
+   * @param tolerance
+   */
+  private simplifyGeom(geometry, tolerance){
+    const type = geometry.type;
+
+    // "unsimplyfiable" geometry types
+    if (type === "Point" || type == "MultiPoint") return geometry;
+
+    // Remove any extra coordinates
+    turf.cleanCoords(geometry, { mutate: true});
+
+    const coordinates = geometry.coordinates;
+    switch (type) {
+      case "LineString":
+        geometry["coordinates"] = this.simplifyLine(
+          coordinates,
+          tolerance
+        );
+        break;
+      case "MultilineString":
+        geometry["coordinates"] = coordinates.map(function (lines) {
+          return this.simplifyLine(lines, tolerance) ;
+        }.bind(this));
+        break ;
+      case "Polygon" :
+        geometry["coordinates"] = this.simplifyPolygon(
+          coordinates,
+          tolerance
+        );
+      break;
+      case "MultiPolygon":
+        geometry["coordinates"] = coordinates.map(function(rings) {
+          return this.simplifyPolygon(rings, tolerance);
+        }.bind(this));
+    }
+    return geometry;
+  }
+
+  private simplifyLine(coordinates, tolerance) {
+    return this.simplify(
+      coordinates.map(function (coord) {
+        return [coord[0], coord[1]];
+      }),
+      tolerance
+    );      
+  }
+
+  /**
+  * I
+  *@param coordinates
+  *@param tolerance
+  *@returns
+  */
+  private simplifyPolygon(coordinates, tolerance) {
+    return coordinates.map(function (ring) {
+      let points = ring.map(function (coord) {
+        return [coord[0], coord[1]];
+      });
+      let simpleRing = this.simplify(points, tolerance);
+        return simpleRing;
+    }.bind(this));
+  }
+
+  private simplify(coordinates, tolerance) {
+    //简化阈值校验
+    if (coordinates.length < 4) {
+      return coordinates;
+    }
+    const last = coordinates.length - 1;
+    let simplified = [coordinates[0]];
+    if (this.isRing(coordinates, 0, last)) {
+      // let d = this.getMaxDist(coordinates, 0, last, tolerance)
+      // this.simpllfyDouglasPeucker(coordinates, 0, d.index, tolerance, simplifled);
+      // this.simplifyDouglasPeucker(coordinates, d.index, last, tolerance, simplified);
+      this.simplifyDouglasPeucker(coordinates, 0, last, tolerance, simplified);
+
+      while (simplified.length < 4) { 
+        tolerance -= tolerance * 0.01;
+        simplified = [coordinates[0]];
+        this.simplifyDouglasPeucker(coordinates, 0, last, tolerance, simplified);
+      }
+    } else {
+    this.simplifyDouglasPeucker(coordinates, 0, last, tolerance, simplified);
+    //simplified.push(points[last]);
+    }
+    return simplified;
+  }
+
+  private isRing(coordinates, first, last) {
+    if ((Math.abs(coordinates[last][0] - coordinates[first][0]) < Number.EPSILON)
+      && (Math.abs(coordinates[last][1] - coordinates[first][1]) < Number. EPSILON)) {
+      return true;
+    }
+    return false;
+  }
+
+  private simplifyDouglasPeucker(coordinates, first, last, tolerance, simplified) {
+    if ((last - first) < 2) {
+      //递归终止条件 只有首末点
+      simplified.push(coordinates[last]);
+      return;
+    }
+    let d = this.getMaxDist(coordinates, first, last, tolerance); //取最大距离
+    //let d = this.computeMaxDistance(points, first, last, tolerance);
+
+    if (d.maxDist <= tolerance) {
+      //递归终止条件
+      simplified.push(coordinates[last]); 
+      return;
+    } else {
+      //d.maxSqDist > tolerance 
+      this.simplifyDouglasPeucker( coordinates, first, d.index, tolerance, simplified);
+      this.simplifyDouglasPeucker( coordinates, d.index, last, tolerance, simplified);
+    }
+  }
+      
 
   /**
    *
@@ -157,6 +302,7 @@ export class DouglasPeukerService {
    */
   private getSegDist(p, p1, p2) {
     //TODO 请同学们完成
+    
     let x = p1[0];
     let y = p1[1];
     let dx = p2[0] - x;
@@ -178,6 +324,12 @@ export class DouglasPeukerService {
     dy = p[1] - y;
 
     return Math.sqrt(dx * dx + dy * dy);
+    //计算直线方程
+    /*
+    let dx = p2[0] - p1[0];
+    let dy = p2[1] - p1[0];
+    let l = Math.sqrt(dx * dx + dy * dy);
+    let s = dx * (p1[1] - p[1]) - dy * (p1[0] - p[0])
+    return Math.abs(s / 1) ; */
   }
-
 }

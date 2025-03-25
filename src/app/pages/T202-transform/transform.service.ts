@@ -93,8 +93,45 @@ export class TransformService {
   /**
    * 生成 DisplaySource
    */
-  private buildDisplaySource() {
-    //TODO 请同学们完成
+  private buildDisplaySource() {//TODO 请同学们完成 
+    const geojson = String2GeoJSON(this.source.geojson_string);
+    if(geojson != null){
+      if(geojson.type === 'FeatureCollection'){
+        geojson.features.forEach((feature)=>{
+          const featureCenter = turf.center(feature.geometry);
+          const center = featureCenter.geometry.coordinates;
+          let matrix = identity();
+          switch (this.action) {
+            case "左斜":
+              matrix = compose(
+                translate(center[0], center[1]),
+                skew(-15.0 * Math.PI / 100.0, 0),
+                translate(-center[0], -center[1])
+              );
+              break;
+            case "耸肩":
+              matrix = compose(
+                translate(center[0], center[1]),
+                skew(0, 15.0 * Math.PI / 180.0),
+                translate(-center[0], -center[1])
+              );
+              break;
+          }
+          matrix = compose(
+            matrix,
+            rotate(-this.rotate * Math.PI / 180.0, center[0], center[1]),
+            scale(this.scaleX, this.scaleY, center[0], center[1]),
+            translate(this.left_and_right, this.up_and_down)
+          );
+          turf.coordEach(feature, (currentCoord, coordIndex, featureIndex, multiFeatureIndex, geometryIndex) => {
+            const coord = applyToPoint(matrix, [currentCoord[0], currentCoord[1]]);
+            currentCoord[0] = coord[0];
+            currentCoord[1] = coord[1];
+          });
+        });
+        this.displaySource.geojson_string = GeoJSON2String(geojson, true);
+      }
+    }
 
   }
 
@@ -114,7 +151,7 @@ export class TransformService {
    */
   public apply() {
     //TODO 请同学们完成
-
+    this.buildDisplaySource();
   }
 
   /**

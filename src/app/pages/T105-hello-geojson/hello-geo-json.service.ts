@@ -55,7 +55,31 @@ export class HelloGeoJsonService {
 
   private extractProperties(geojson) {
     //TODO: 按照表格要求，实现对geojson对象信息的提取，请同学实现
-
+    this._features.dictionary = [];
+    this._features.properties = [];
+    this._features.geometry = [];
+    if (geojson != undefined) {
+      if (geojson.type === 'FeatureCollection'){
+        this._features.dictionary.push('sid');
+        for (let i = 0; i < geojson.features.length; i++) {
+          const feature = geojson.features[i];
+          this._features.geometry.push(feature.geometry)
+          if (feature.properties === undefined) {
+            feature.properties = {};
+          }
+          if (feature.properties['sid'] === undefined) {
+            feature.properties['sid'] = i;
+          }
+          this._features.properties.push(feature.properties);
+          const keys = Object.getOwnPropertyNames(feature.properties);
+          keys.forEach((key) => {
+            if(this._features.dictionary.indexOf(key) == -1) {
+              this._features.dictionary.push(key);
+            }
+          });
+        }
+      }
+    }
   }
 
   /**
@@ -79,7 +103,11 @@ export class HelloGeoJsonService {
    */
   public openFile(file: File) {
     //TODO: 如何读取geojson文件？请同学们实现
-
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      this.code = event.target.result;
+    }
+    reader.readAsText(file, 'utf-8');
   }
 
   /**
@@ -87,7 +115,11 @@ export class HelloGeoJsonService {
    */
   public saveFile(filename) {
     //TODO: 如何保存geojson文件？请同学们实现
-
+    console.log(this.code);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,\ufeff' + encodeURIComponent(this.code);
+    a.download = filename;
+    a.click();
   }
 
   /**
@@ -96,7 +128,7 @@ export class HelloGeoJsonService {
    */
   public location(sid) {
     // console.log(index);
-    this.map.locationFeature(sid);
+    this.map.locationFeature(sid); //service对象和map组件的引用
   }
 }
 

@@ -15,6 +15,7 @@ import { GeoJsonComponent } from './geojson/geojson.component';
 import { MapComponent } from './map/map.component';
 import { AttributeComponent } from './attribute/attribute.component';
 
+
 @NgModule({
   declarations: [
     MyNameComponent,

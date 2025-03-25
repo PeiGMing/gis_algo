@@ -247,7 +247,11 @@ export class GeoJsonSource {
    */
   public openFile(file: File) {
     //TODO: 如何读取geojson文件？请同学们实现
-    //const reader = new FileReader();
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      this._geojson_string = event.target.result;
+    }
+    reader.readAsText(file, 'utf-8');
   }
 
   /**
@@ -255,6 +259,11 @@ export class GeoJsonSource {
    */
   public saveFile(filename, pretty: boolean = true) {
     //TODO: 如何保存geojson文件？请同学们实现
+    console.log(this._geojson_string);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,\ufeff' + encodeURIComponent(this._geojson_string);
+    a.download = filename;
+    a.click();
 
   }
 
@@ -275,7 +284,9 @@ export class GeoJsonSource {
         selectedFeature = feature;
       }  
     });
-    return selectedFeature.getGeometry();
+    
+    return selectedFeature;
+  
   }
 
   /**

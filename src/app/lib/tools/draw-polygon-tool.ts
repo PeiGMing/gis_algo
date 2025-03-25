@@ -23,16 +23,73 @@ export class DrawPolygonTool extends AbstractTool {
     super.onmousedown(event);
 
     //TODO: 请同学们实现
+    switch(event.button)
+    {
+      case 0:
+        {
+          if(this._dragging)
+          {
+            this._points.push(this.mouseDown);
+          }
+          else
+          {
+            //保存canvas绘图表面
+            this.saveDrawingSurface();
+            this._points = [];
+            //标识鼠标处于拖曳状态
+            this._dragging = true;
+            this._startPoint = this.mouseDown;
+          }
+          break;
+        }
+      case 2:
+        {
+          if(this._dragging)
+          {
+            this._points.unshift(this._startPoint);
+            this._points.push(this.mouseDown);
+            //标识鼠标不在拖曳状态
+            this._dragging = false;
+          }
+          break;
+        }
+    } 
   }
   onmousemove(event: MouseEvent) {
     super.onmousemove(event);
 
     //TODO: 请同学们实现
+    if(this._dragging)
+    {
+      //恢复绘图表面
+      this.restoreDrawingSurface();//清除状态
+      //绘制线段
+      this.draw();
+    }
   }
   ondblclick(event: MouseEvent) {
     super.ondblclick(event);
 
     //TODO: 请同学们实现
+    this._dragging = false;
+  }
+
+  private draw()
+  {
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.moveTo(this._startPoint.x, this._startPoint.y);
+    this._points.forEach((pnt) => {
+    this.ctx.lineTo(pnt.x, pnt.y);
+    })
+    this.ctx.lineTo(this.mouseMove.x, this.mouseMove.y);
+    this.ctx.lineTo(this._startPoint.x, this._startPoint.y);
+    this.ctx.lineWidth = this.options['lineWidth'];
+    this.ctx.strokeStyle = this.options['strokeStyle'];
+    this.ctx.fillStyle = this.options['fillStyle'];
+    this.ctx.stroke();
+    this.ctx.fill();
+    this.ctx.restore();
   }
 
 

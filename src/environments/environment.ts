@@ -9,7 +9,7 @@ export const environment = {
 
   common: {
     tdt: {
-      token: '', //TODO: 需要自行申请
+      token: '5b32f2c67407acd3d1bf3a12163955ce', //TODO: 需要自行申请
     }
   },
 
@@ -119,6 +119,9 @@ export const environment = {
 
   t216_buffer_overlay: {
     title: 'T216 Buffer Overlay',
+    landuse_url:'assets/data/aquafarm/landuse.json',
+    severs_url:'assets/data/aquafarm/sewers.json',
+    soil_url:'assets/data/aquafarm/soil.json'
   },
 
   t217_terrian_factor: {

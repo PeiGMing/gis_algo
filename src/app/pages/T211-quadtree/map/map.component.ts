@@ -1,11 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { GUI } from 'dat.gui';
-
+import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import { useGeographic } from 'ol/proj';
 import Map from 'ol/Map';
 import View from 'ol/View';
-
+import { click } from 'ol/events/condition';    //导入点击事件
+import Select from 'ol/interaction/Select';       //导入选择交互工具（openlayers中的方法）
 import TDTLayerFactory from '../../../lib/ol/layer/tdt-layer-factory';
 import TDTSourceFactory from '../../../lib/ol/source/tdt-source-factory';
 
@@ -22,7 +23,7 @@ const token = environment.common.tdt.token;
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements OnInit, OnDestroy {
-
+  private _select: Select;
   public map: Map;
   private map_view;
   private tdt_img_c_layer;
@@ -62,7 +63,10 @@ export class MapComponent implements OnInit, OnDestroy {
    * @param sid
    */
   public onLocationFeature(sid) {
-    const geo = this.service.source.getFeatureBySid(sid);
+    const feature = this.service.source.getFeatureBySid(sid);
+    this._select.getFeatures().clear();       //清除选择
+    this._select.getFeatures().push(feature); 
+    const geo = feature.getGeometry();
     this.zoomToGeometry(geo);
   }
 
@@ -121,6 +125,20 @@ export class MapComponent implements OnInit, OnDestroy {
       layers: [this.tdt_img_c_layer, this.tdt_anno_C_layer],
       view: this.map_view
     });
+
+    this._select = new Select({
+      condition: click,
+      style: new Style({
+        stroke: new Stroke({
+          color: 'red',
+          width: 5,
+        }),
+        fill: new Fill({
+        color: 'rgba(255, 255, 255, 0.1)',
+    }),
+  })
+});
+this.map.addInteraction(this._select);
   }
 
 

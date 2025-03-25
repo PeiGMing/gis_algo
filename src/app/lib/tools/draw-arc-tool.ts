@@ -22,12 +22,78 @@ export class DrawArcTool extends AbstractTool {
     super.onmousedown(event);
 
     //TODO: 请同学们实现
-  }
+    if(event.button == 0)
+    {
+          if(this._dragging)
+          {
+            this._points.push(this.mouseDown);
+            if(this._points.length==3)
+            {
+              this._dragging = false;
+            }
+          }
+          else
+          { 
+            this._points = [];
+            //保存canvas绘图表面
+            this.saveDrawingSurface();           
+            //标识鼠标处于拖曳状态
+            this._dragging = true;
+            this._points.push(this.mouseDown);
+          }
+        }      
+    }
+  
   onmousemove(event: MouseEvent) {
     super.onmousemove(event);
 
     //TODO: 请同学们实现
+    if(this._dragging)
+    {
+      this.restoreDrawingSurface();
+      this.draw();
+    }
   }
+  
+  private draw()
+  {
+    switch(this._points.length)
+    {
+      case 1:
+        this.drawLine(this._points[0], this.mouseMove);
+        break;
+      case 2:
+        this.drawArc(this._points[0], this.mouseMove, this._points[1]);
+        break;
+    }
+  }
+
+  private drawLine(startPoint, endPoint)
+  {
+    this.ctx.save();
+    this.ctx.beginPath();
+    this.ctx.moveTo(startPoint.x, startPoint.y);
+    this.ctx.lineTo(endPoint.x, endPoint.y);
+
+    this.ctx.lineWidth = this.options['lineWidth'];
+    this.ctx.strokeStyle = this.options['strokeStyle'];
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+ private drawArc(startPoint, middlePoint, endPoint)
+ {
+  this.ctx.save();
+
+  const arc = this.create3PointArc(startPoint, middlePoint, endPoint);
+  this.ctx.beginPath();
+  this.ctx.arc(arc.x, arc.y, arc.radius, arc.startAngle, arc.endAngle);
+  
+  this.ctx.lineWidth = this.options['lineWidth'];
+  this.ctx.strokeStyle = this.options['strokeStyle'];
+  this.ctx.stroke();
+  this.ctx.restore();
+ }
 
   /**
    *

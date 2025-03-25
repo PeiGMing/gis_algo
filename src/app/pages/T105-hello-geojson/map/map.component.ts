@@ -3,7 +3,7 @@ import { environment } from 'src/environments/environment';
 
 import { GUI } from 'dat.gui';
 
-import { useGeographic } from 'ol/proj';
+import { setUserProjection, useGeographic } from 'ol/proj';
 
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -20,6 +20,7 @@ import TDTLayerFactory from '../../../lib/ol/layer/tdt-layer-factory';
 import TDTSourceFactory from '../../../lib/ol/source/tdt-source-factory';
 
 import { HelloGeoJsonService } from '../hello-geo-json.service';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 // 天地图 Token
 const token = environment.common.tdt.token;
@@ -110,7 +111,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private map;
   private map_view;
   private tdt_img_c_layer;
-  private tdt_anno_C_layer;
+  private tdt_anno_c_layer;
   private geojson_layer;
 
   private geojson_source;
@@ -141,6 +142,18 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   public locationFeature(sid) {
     //TODO: 如何实现矢量图层要素的定位和地图放大？请同学们实现
+    if ((this.geojson === undefined) || (sid < 0)) {
+      return;
+    }
+    const features = this.geojson_source.getFeatures();
+    features.forEach(feature => {
+      const id = feature.getProperties()['sid'];
+      if (id == sid) {
+        const geo = feature.getGeometry();
+        this.map_view.fit(geo,{ padding: [170, 170, 170, 170], minResolution: 50});
+      }  
+    });
+
 
   }
 
@@ -149,7 +162,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
     this.service.map = this;
 
     this.tdt_img_c_layer = TDTLayerFactory.tdt_vec_c_layer(token);
-    this.tdt_anno_C_layer = TDTLayerFactory.tdt_cva_c_layer(token);
+    this.tdt_anno_c_layer = TDTLayerFactory.tdt_cva_c_layer(token);
     //TODO: 矢量图层是如何创建的？
     //TODO: 地图图层样式是如何定义的？
     this.geojson_layer = new VectorLayer({
@@ -182,10 +195,10 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
       //TODO: 栅格图层数据源是如何更新的？
       if (value === 'images') {
         this.tdt_img_c_layer.setSource(TDTSourceFactory.tdt_img_c_source(token));
-        this.tdt_anno_C_layer.setSource(TDTSourceFactory.tdt_eia_c_source(token));
+        this.tdt_anno_c_layer.setSource(TDTSourceFactory.tdt_eia_c_source(token));
       } else {
         this.tdt_img_c_layer.setSource(TDTSourceFactory.tdt_vec_c_source(token));
-        this.tdt_anno_C_layer.setSource(TDTSourceFactory.tdt_cva_c_source(token));
+        this.tdt_anno_c_layer.setSource(TDTSourceFactory.tdt_cva_c_source(token));
       }
     });
 
@@ -202,9 +215,20 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
   private initMap() {
 
     //设置空间参考
-    useGeographic();
+    //useGeographic();
+    setUserProjection('EPSG:4326'); //经纬度
 
     //TODO: 地图初始化剩余部分完成，请同学们实现
+    this.map_view = new View({ //地图视窗，中心点150，0
+      center:[150, 0],
+      zoom: 1,
+    });
+    this.map = new Map({
+      target: 't105-ol-map',
+      layers: [this.tdt_img_c_layer, this.tdt_anno_c_layer, this.geojson_layer],
+      view: this.map_view//map的性质、容器    图层：影像、注记  看哪一部分
+  
+    });
   }
 
 }

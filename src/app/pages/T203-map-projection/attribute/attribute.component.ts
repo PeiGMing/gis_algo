@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { MapProjectionService } from '../map-projection.service';
 
 @Component({
   selector: 't203-attribute',
@@ -11,10 +12,21 @@ export class AttributeComponent implements OnInit {
   public scrollWidth = 0;
   public scrollHeight = 0;
 
+
+  public get features() {
+    this.reset();
+    return this.service.source.features;
+  }
+
+  // 获取窗口变化
+  @HostListener('window:resize', ['$event'])
+  onResize(event) {
+    this.reset();
+  }
   /**
    * mock 构建框架用特征要素集
    */
-  private _mock_features = {
+  /*private _mock_features = {
     dictionary: [], //属性字段列表
     geometry: [],   //几何对象列表
     properties: [], //属性记录列表
@@ -28,9 +40,9 @@ export class AttributeComponent implements OnInit {
   @HostListener('window:resize', ['$event'])
   onResize(event) {
     this.reset();
-  }
+  }*/
 
-  constructor() { }
+  constructor(private service: MapProjectionService) { }
 
   ngOnInit(): void {
     this.tableEl = document.getElementById("t203-attribute-table");
@@ -38,7 +50,7 @@ export class AttributeComponent implements OnInit {
   }
 
   public onLocation(sid) {
-
+    this.service.locationFeature.emit(sid);
   }
 
   private reset() {

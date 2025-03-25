@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { map } from 'd3';
+import { GeoJSON2String } from 'src/app/lib/services/geojson-source';
 import { environment } from 'src/environments/environment';
+import { BufferOverlayService } from './buffer-overlay.service';
 
 @Component({
   selector: 't216-buffer-overlay',
@@ -10,21 +13,23 @@ export class BufferOverlayComponent implements OnInit {
 
   public title = environment.t216_buffer_overlay.title;
 
-  constructor() { }
+  constructor(private service: BufferOverlayService) { }
 
   ngOnInit(): void {
   }
 
   public onOpenClick() {
-
+    this.service.loadFile.emit();
+    this.service.downloadFile();
+    this.service.candidate.geojson_string ='';
   }
 
   public onSaveClick() {
-
+    const filename = this.service.createFileName();
+    this.service.saveFile(filename);
   }
 
   public onOverlayClick() {
-
+    this.service.overlay();
   }
-
 }

@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { BufferOverlayService } from '../buffer-overlay.service';
 
 @Component({
   selector: 't216-attribute',
@@ -11,17 +12,9 @@ export class AttributeComponent implements OnInit {
   public scrollWidth = 0;
   public scrollHeight = 0;
 
-  /**
-   * mock 构建框架用特征要素集
-   */
-  private _mock_features = {
-    dictionary: [], //属性字段列表
-    geometry: [],   //几何对象列表
-    properties: [], //属性记录列表
-  }
   public get features() {
     this.reset();
-    return this._mock_features;
+    return this.service.activeSource.features;
   }
 
   // 获取窗口变化
@@ -30,7 +23,7 @@ export class AttributeComponent implements OnInit {
     this.reset();
   }
 
-  constructor() { }
+  constructor(private service: BufferOverlayService) { }
 
   ngOnInit(): void {
     this.tableEl = document.getElementById("t216-attribute-table");
@@ -38,11 +31,11 @@ export class AttributeComponent implements OnInit {
   }
 
   public onLocation(sid) {
-
+    this.service.locationFeature.emit(sid);
   }
 
   private reset() {
-    let cols = 0; //mock 初始化用
+    let cols = this.service.activeSource.features.dictionary.length;
     if (cols < 3) cols = 3;
     // 重新设置参数
     this.scrollWidth = 120 * cols;

@@ -1,12 +1,12 @@
 <div class="t201-attribute-content">
-  <nz-table id="t201-attribute-table" #basicTable [nzData]="features.properties" [nzSize]="'small'" [nzBordered]="true"
+  <nz-table id="t201_attribute_table" #basicTable [nzData]="features.properties" [nzSize]="'small'" [nzBordered]="true"
     [nzOuterBordered]="true" [nzTableLayout]="'fixed'" [nzShowPagination]="false" [nzFrontPagination]="false"
     [nzScroll]="{ x: scrollWidth + 'px', y: scrollHeight + 'px' }">
     <thead>
       <tr>
         <th nzLeft nzWidth="32px">
         </th>
-        <!-- <th *ngFor="let c of features.dictionary" nzEllipsis>{{c}}</th> -->
+        <th *ngFor="let c of features.dictionary" nzEllipsis>{{c}}</th>
       </tr>
     </thead>
     <tbody>
@@ -22,7 +22,7 @@
             </svg>
           </i>
         </td>
-        <!-- <td *ngFor="let c of features.dictionary" nzEllipsis>{{data[c]}}</td> -->
+        <td *ngFor="let c of features.dictionary" nzEllipsis>{{data[c]}}</td>
       </tr>
     </tbody>
   </nz-table>

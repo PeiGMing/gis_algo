@@ -1,5 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 
+import 'codemirror/lib/codemirror';
+import 'codemirror/mode/javascript/javascript';
+
+import { MyNameService } from '../my-name.service';
+
 @Component({
   selector: 't201-geojson',
   templateUrl: './geojson.component.html',
@@ -7,20 +12,17 @@ import { Component, OnInit } from '@angular/core';
 })
 export class GeoJsonComponent implements OnInit {
 
-  /**
-   *
-   */
-  public get code() {
-    //TODO: 请同学们实现
-    return '';
+  public get code() {//TODO: 请同学们实现 
+    return this.service.code;
   };
-  public set code(value) {
-    //TODO: 请同学们实现
+  public set code(value) {//TODO: 请同学们实现 
+    this.service.code = value;
   }
 
-  constructor() { }
+  constructor(
+    private service: MyNameService
+  ) { }
 
-  ngOnInit(): void {
-  }
+  ngOnInit(): void { }
 
 }

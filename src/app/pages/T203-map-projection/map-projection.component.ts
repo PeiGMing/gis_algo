@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { environment } from 'src/environments/environment';
+import { MapProjectionService } from './map-projection.service';
 
 @Component({
   selector: 't203-map-projection',
@@ -10,21 +11,42 @@ export class MapProjectionComponent implements OnInit {
 
   public title = environment.t203_map_projection.title;
 
-  constructor() { }
+  constructor(private service: MapProjectionService) { }
 
   ngOnInit(): void {
   }
 
   public onOpenClick() {
-
+    this.openFileDialog((event) => {
+      this.service.openFile(event.target.files[0]);
+    });
   }
 
   public onSaveClick() {
+    const filename = this.service.createFileName();
+    this.service.saveFile(filename);
+  }
 
+  public onMercatorTurfClick() {
+    this.service.toMercatorByTurf();
   }
 
   public onMercatorClick() {
-
+    this.service.toMercator();
   }
 
+  /**
+   *
+   * @param callback
+   */
+     private openFileDialog(callback) {
+      var inputEl = document.createElement("input");
+      inputEl.type = "file";
+      inputEl.accept = "application/json, text/plain";
+      inputEl.multiple = false;
+      if (typeof callback === "function") {
+        inputEl.addEventListener("change", callback);
+      }
+      inputEl.dispatchEvent(new MouseEvent("click"));
+    }
 }

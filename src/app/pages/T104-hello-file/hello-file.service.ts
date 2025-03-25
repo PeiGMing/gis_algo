@@ -42,7 +42,11 @@ export class HelloFileService {
    */
   public openFile(file: File) {
     //TODO: FileReader的使用，请同学们实现
-
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      this.code = event.target.result;
+    }
+    reader.readAsText(file, 'utf-8');
   }
 
   /**
@@ -51,7 +55,11 @@ export class HelloFileService {
    */
   public downloadFile(url: string) {
     //TODO: HttpClient 的使用，请同学们实现
-
+    return this.http.get(url, {
+      responseType: "text"
+    }).subscribe(result => {
+      this.code =result;
+    });
   }
 
   /**
@@ -59,6 +67,10 @@ export class HelloFileService {
    */
   public saveFile(filename) {
     //TODO: 文件保存，请同学们实现
-
+    console.log(this.code);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,\ufeff' + encodeURIComponent(this.code);
+    a.download = filename;
+    a.click();
   }
 }

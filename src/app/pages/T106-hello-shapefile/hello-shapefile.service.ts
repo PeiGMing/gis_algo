@@ -42,7 +42,31 @@ export class HelloShapefileService {
 
   private extractProperties(value) {
     //TODO: 按照表格要求，实现对geojson对象信息的提取，请同学实现
-
+    this._features.dictionary = [];
+    this._features.properties = [];
+    this._features.geometry = [];
+    if (value != undefined) {
+      if (value.type === 'FeatureCollection'){
+        this._features.dictionary.push('sid');
+        for (let i = 0; i < value.features.length; i++) {
+          const feature = value.features[i];
+          this._features.geometry.push(feature.geometry)
+          if (feature.properties === undefined) {
+            feature.properties = {};
+          }
+          if (feature.properties['sid'] === undefined) {
+            feature.properties['sid'] = i;
+          }
+          this._features.properties.push(feature.properties);
+          const keys = Object.getOwnPropertyNames(feature.properties);
+          keys.forEach((key) => {
+            if(this._features.dictionary.indexOf(key) == -1) {
+              this._features.dictionary.push(key);
+            }
+          });
+        }
+      }
+    }
   }
 
 
@@ -65,13 +89,35 @@ export class HelloShapefileService {
   public openShapefile(shp: File, dbf?: File) {
     //TODO: 如何基于异步打开多个文件？请同学们实现
     //TODO: 如何读取shp和dbf文件？请同学们实现
+    let shpbuf = undefined;
+    let dbfbuf = undefined; //以buffer方式打开shapefile
 
+    if (shp === undefined) return;
 
+    const shpreader = new FileReader();
+    shpreader.onload = (event) => {
+      shpbuf = event.target.result;
+      if (dbf == undefined) {
+        this.shapefile2geojson(shpbuf);
+        return;
+      }
+      const dbfreader = new FileReader();
+      dbfreader.onload = (event) => {
+        dbfbuf = event.target.result;
+        this.shapefile2geojson(shpbuf,dbfbuf);
+      }
+      dbfreader.readAsArrayBuffer(dbf);
+    }
+    shpreader.readAsArrayBuffer(shp);
   }
 
   public openGeoJson(file: File) {
      //TODO: 如何读取geojson文件？请同学们实现
-
+     const reader = new FileReader();
+     reader.onload = (event) => {
+       this.code = event.target.result;
+     }
+     reader.readAsText(file, 'utf-8');
   }
 
   /**
@@ -79,13 +125,22 @@ export class HelloShapefileService {
    */
   public saveFile(filename) {
     //TODO: 如何保存geojson文件？请同学们实现
-
+    console.log(this.code);
+    const a = document.createElement('a');
+    a.href = 'data:application/json;charset=utf-8,\ufeff' + encodeURIComponent(this.code);
+    a.download = filename;
+    a.click();
   }
 
   private shapefile2geojson(shpbuf, dbfbuf?) {
     //TODO: 如何调取 shapefile 包 实现数据geojson的转换？ 请同学们实现
     //TODO: 如何调取 beautify 包 实现geojson文本格式美化？ 请同学们实现
-
+    //shapefile
+    shapefile.read(shpbuf, dbfbuf, { encoding: 'utf-8' })
+      .then((value) => {
+        this.code = beautify(JSON.stringify(value), { keep_array_indentation: true});
+      })
+      .catch(error => console.error(error.stack));
   }
 
 }

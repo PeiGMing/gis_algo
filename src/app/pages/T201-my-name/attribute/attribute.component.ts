@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { MyNameService } from '../my-name.service';
 
 @Component({
   selector: 't201-attribute',
@@ -6,21 +7,14 @@ import { Component, HostListener, OnInit } from '@angular/core';
   styleUrls: ['./attribute.component.scss']
 })
 export class AttributeComponent implements OnInit {
+ 
   private tableEl: HTMLElement;
   public scrollWidth = 0;
   public scrollHeight = 0;
 
-  /**
-   * mock 构建框架用特征要素集
-   */
-  private _mock_features = {
-    dictionary: [], //属性字段列表
-    geometry: [],   //几何对象列表
-    properties: [], //属性记录列表
-  }
   public get features() {
     this.reset();
-    return this._mock_features;
+    return this.service.features;
   }
 
   // 获取窗口变化
@@ -29,19 +23,19 @@ export class AttributeComponent implements OnInit {
     this.reset();
   }
 
-  constructor() { }
+  constructor(private service: MyNameService) { }
 
   ngOnInit(): void {
-    this.tableEl = document.getElementById("t201-attribute-table");
+    this.tableEl = document.getElementById("t201_attribute_table");
     this.reset();
   }
 
   public onLocation(sid) {
-
+    this.service.location(sid);
   }
 
   private reset() {
-    let cols = 0; //mock 初始化用
+    let cols = this.service.features.dictionary.length;
     if (cols < 3) cols = 3;
     // 重新设置参数
     this.scrollWidth = 120 * cols;
@@ -49,3 +43,4 @@ export class AttributeComponent implements OnInit {
     this.scrollHeight = this.tableEl.clientHeight - 39;
   }
 }
+  
