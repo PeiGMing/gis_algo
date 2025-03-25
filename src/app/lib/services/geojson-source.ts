@@ -1,5 +1,6 @@
 
 import GeoJSON from '@mapbox/geojson-types';
+import geoJSON from 'ol/format/GeoJSON';
 import normalize from '@mapbox/geojson-normalize';
 import beautify from 'js-beautify';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +12,7 @@ import * as format from 'ol/format/GeoJSON';
 // import Circle from 'ol/geom/Circle';
 // import Feature from 'ol/Feature';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import { id_ID } from 'ng-zorro-antd/i18n';
 
 // GeoJson图层地图样式
 const image = new CircleStyle({
@@ -96,15 +98,21 @@ const styleFunction = function (feature) {
  */
 export function GeoJSON2String(geojson: GeoJSON, pretty: boolean = false): string {
   //TODO: 如何将 geojson 对象转为 geojson 字符串，请同学们实现
-
-  return '';
+  if(pretty) {
+    return beautify(JSON.stringify(geojson), { keep_array_indentation: true});
+  }
+  return JSON.stringify(geojson);
 }
 
 /** string 转 GeoJSON */
 export function String2GeoJSON(json: string): GeoJSON {
   //TODO: 如何将 json 字符串 转为 geojson 对象，请同学们实现
-
-  return null;
+  try {
+    return JSON.parse(json) as GeoJSON;
+  }
+  catch {
+    return null;
+  }  
 }
 
 /**
@@ -195,7 +203,14 @@ export class GeoJsonSource {
    */
   public fromUrl(url: string) {
     //TODO: 如何基于url获取字符串创建 geojson 对象， 请同学们实现
-
+    const xhr = new XMLHttpRequest();
+    xhr.onload = () => {
+      this.geojson_string = xhr.response as string;
+    }
+    xhr.timeout = 0;
+    xhr.open('GET', url, true);
+    xhr.responseType = 'text';
+    xhr.send();
   }
 
   /**
@@ -204,7 +219,13 @@ export class GeoJsonSource {
    */
   private fromString(json: string) {
     //TODO: 如何将 json 字符串 转为 geojson 对象，请同学们实现
-
+    
+    try {
+      this.geojson = JSON.parse(json) as GeoJSON;
+    }
+    catch {
+      this.geojson = null;
+    }
   }
 
   /**
@@ -214,8 +235,10 @@ export class GeoJsonSource {
    */
   public toString(pretty: boolean = false): string {
     //TODO: 如何将 geojson 对象转为 geojson 字符串，请同学们实现
-
-    return '';
+    if(pretty) {
+      return beautify(JSON.stringify(this.geojson), { keep_array_indentation: true });
+    }
+    return JSON.stringify(this.geojson);
   }
 
   /**
@@ -224,7 +247,7 @@ export class GeoJsonSource {
    */
   public openFile(file: File) {
     //TODO: 如何读取geojson文件？请同学们实现
-
+    //const reader = new FileReader();
   }
 
   /**
@@ -239,9 +262,20 @@ export class GeoJsonSource {
    * 定位要素
    * @param sid
    */
-  public getFeatureBySid(sid) {
+   public getFeatureBySid(sid) {
     //TODO: 根据sid查找要素的几何属性，请同学们实现
-
+    if ((this.geojson === undefined) || (sid < 0)) {
+      return null;
+    }
+    let selectedFeature;
+    const features = this._mapsource.getFeatures();
+    features.forEach(feature => {
+      const id = feature.getProperties()['sid'];
+      if (id == sid) {
+        selectedFeature = feature;
+      }  
+    });
+    return selectedFeature.getGeometry();
   }
 
   /**
@@ -249,7 +283,31 @@ export class GeoJsonSource {
    */
   private extractProperties() {
     //TODO: 按照表格要求，实现对geojson对象信息的提取，请同学实现
-
+    this._features.dictionary = [];
+    this._features.properties = [];
+    this._features.geometry = [];
+    if (this._geojson != undefined) {
+      if (this._geojson.type === 'FeatureCollection'){
+        this._features.dictionary.push('sid');
+        for (let i = 0; i < this.geojson.features.length; i++) {
+          const feature = this._geojson.features[i];
+          this._features.geometry.push(feature.geometry)
+          if (feature.properties === undefined) {
+            feature.properties = {};
+          }
+          if (feature.properties['sid'] === undefined) {
+            feature.properties['sid'] = i;
+          }
+          this._features.properties.push(feature.properties);
+          const keys = Object.getOwnPropertyNames(feature.properties);
+          keys.forEach((key) => {
+            if(this._features.dictionary.indexOf(key) == -1) {
+              this._features.dictionary.push(key);
+            }
+          });
+        }
+      }
+    }
   }
 
   /**
@@ -257,6 +315,16 @@ export class GeoJsonSource {
    */
   private setMapLayerSource() {
     //TODO: 设置矢量图层的数据源，实现数据源更新，请同学实现
-
+    this._maplayer.setSource(undefined);
+    if (this._geojson != undefined) {
+      this._mapsource = new VectorSource({
+        features: new geoJSON().readFeatures(this._geojson)
+      });
+      this._maplayer.setSource(this._mapsource);
+    }
   }
+
 }
+
+  
+
